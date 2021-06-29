@@ -1,2 +1,13 @@
+# Api settings and modules.
 node_modules
 .env
+
+# C compilation and intellisense settings.
+.vscode
+
+# 3DS Homebrew compiled files.
+3ds-src/3ds-src.3dsx
+3ds-src/3ds-src.elf
+3ds-src/3ds-src.smdh
+3ds-src/build
+
