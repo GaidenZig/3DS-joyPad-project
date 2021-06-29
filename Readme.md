@@ -6,7 +6,7 @@ currently in progress.
 - devkitPro and it's tools installed i recommend following https://devkitpro.org/wiki/Main_Page guides,
 but feel free to use any other guide you want.
 - Node js installed
-- and of course your should have your 3ds with homebrew installed in it.
+- and of course your should have your 3ds with homebrew installed on it.
 
 ##  Usage
 - The ip addres used in the main.c http_post() function has to be your local ip address 
