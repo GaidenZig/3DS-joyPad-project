@@ -2,11 +2,16 @@ import {Router} from 'express';
 const router = Router();
 
 router.get('/',(req,res)=>{
-    res.send('index');
+    res.json('Gracias por usarme');
 });
 
-router.get('/about', (req,res)=>{
-    res.render('about');
+router.post('/init',(req, res)=>{
+    res.json('conexion establecida...');
 });
+
+router.post('/keyPressed', (req, res)=>{
+    console.log(req.body);
+    res.json({'key':req.body.key});
+})
 
 export default router;

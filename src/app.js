@@ -3,6 +3,11 @@ import IndexRoutes from './routes/index.routes';
 
 const app = express();
 
+// settings
 app.set('port', process.env.PORT || 3000);
+app.use(express.json());
 
-app.use('/api/index',IndexRoutes);
+// routes
+app.use('/api',IndexRoutes);
+
+export default app;
