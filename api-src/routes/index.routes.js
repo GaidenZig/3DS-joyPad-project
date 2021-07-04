@@ -10,6 +10,7 @@ router.post('/init',(req, res)=>{
 });
 
 router.post('/keyPressed', (req, res)=>{
+    process.stdout.write("\u001b[2J\u001b[0;0H");
     console.log(req.body);
     res.json({'key':req.body.key});
 })
