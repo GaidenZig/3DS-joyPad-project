@@ -5,8 +5,7 @@
 
 #include <3ds.h>
 
-Result http_post(const char* url, const char* data,bool checkRequest)
-{
+Result http_post(const char* url, const char* data,bool checkRequest){
 	Result ret=0;
 	httpcContext context;
 	char *newurl=NULL;
@@ -191,8 +190,131 @@ void arrayToJson (char array[32][32], int sz, char string[1087]){
 	strcat(string,"]");
 }
 
+static SwkbdCallbackResult MyCallback(void* user, const char** ppMessage, const char* text, size_t textlen){
+	if (strstr(text, "lenny"))
+	{
+		*ppMessage = "Nice try but I'm not letting you use that meme right now";
+		return SWKBD_CALLBACK_CONTINUE;
+	}
+
+	if (strstr(text, "brick"))
+	{
+		*ppMessage = "~Time to visit Brick City~";
+		return SWKBD_CALLBACK_CLOSE;
+	}
+
+	return SWKBD_CALLBACK_OK;
+}
+
+char* getIp(){
+	gfxInitDefault();
+	consoleInit(GFX_TOP, NULL);
+
+	printf("Press A to write the ip direction\n");
+	printf("START: exit\n");
+
+	static char* ip;
+
+	while (aptMainLoop()){
+		hidScanInput();
+
+		u32 kDown = hidKeysDown();
+
+		if (kDown & KEY_START)
+			break;
+
+		static SwkbdState swkbd;
+		static char mybuf[60];
+		static SwkbdStatusData swkbdStatus;
+		static SwkbdLearningData swkbdLearning;
+		SwkbdButton button = SWKBD_BUTTON_NONE;
+		bool didit = false;
+
+		if (kDown & KEY_A)
+		{
+			didit = true;
+			swkbdInit(&swkbd, SWKBD_TYPE_WESTERN, 2, -1);
+			swkbdSetValidation(&swkbd, SWKBD_NOTEMPTY_NOTBLANK, 0, 0);
+			swkbdSetFeatures(&swkbd, SWKBD_DARKEN_TOP_SCREEN | SWKBD_ALLOW_HOME | SWKBD_ALLOW_RESET | SWKBD_ALLOW_POWER);
+			swkbdSetFilterCallback(&swkbd, MyCallback, NULL);
+
+			bool shouldQuit = false;
+			mybuf[0] = 0;
+			do
+			{
+				swkbdSetInitialText(&swkbd, mybuf);
+				button = swkbdInputText(&swkbd, mybuf, sizeof(mybuf));
+				if (button != SWKBD_BUTTON_NONE)
+					break;
+
+				SwkbdResult res = swkbdGetResult(&swkbd);
+				if (res == SWKBD_RESETPRESSED)
+				{
+					shouldQuit = true;
+					aptSetChainloaderToSelf();
+					break;
+				}
+				else if (res != SWKBD_HOMEPRESSED && res != SWKBD_POWERPRESSED)
+					break; // An actual error happened, display it
+
+				shouldQuit = !aptMainLoop();
+			} while (!shouldQuit);
+
+			if (shouldQuit)
+				break;
+		}
+
+		if (didit)
+		{
+			if (button != SWKBD_BUTTON_NONE)
+			{
+				ip=malloc(strlen(mybuf)+1);
+				strcpy(ip, mybuf);
+
+				// printf("You pressed button %d\n", button);
+				// printf("Text: %s\n", url);
+				// printf("tamanio url: %i\n",sizeof(url));
+			} else
+				printf("swkbd event: %d\n", swkbdGetResult(&swkbd));
+			
+			break;
+		}
+
+		// Flush and swap framebuffers
+		gfxFlushBuffers();
+		gfxSwapBuffers();
+
+		gspWaitForVBlank();
+	}
+
+	gfxExit();
+	if(strlen(ip) > 4){
+		return ip;
+	}else{
+		char* fail="url captation failed.";
+		return fail;
+	}
+}
+
+char* getUrl(char* ip, char* port, char* path){
+	static char* result;
+	result = malloc(1+strlen(path)+strlen(ip)+strlen(path));
+	strcpy(result, "http://");
+	strcat(result, ip);
+	strcat(result, port);
+	strcat(result, path);
+
+	return result;
+}
+
 int main()
 {
+	char* ip_adress=getIp();
+	char* url_init=getUrl(ip_adress,":3000","/api/init");
+	char* url_keypressed= getUrl(ip_adress,":3000","/api/keyPressed");
+	printf("url init: %s\n",url_init);
+	printf("url key: %s\n",url_keypressed);
+
 	char keysNames[32][32] = {
 		"KEY_A", "KEY_B", "KEY_SELECT", "KEY_START",
 		"KEY_DRIGHT", "KEY_DLEFT", "KEY_DUP", "KEY_DDOWN",
@@ -207,10 +329,9 @@ int main()
 	Result ret=0;
 	gfxInitDefault();
 	httpcInit(4 * 1024 * 1024); // Buffer size when POST/PUT.
-
 	consoleInit(GFX_BOTTOM,NULL);
 
-	ret=http_post("http://192.168.0.2:3000/api/init", "{\"foo\":\"barr\"}",false);
+	ret=http_post(url_init, "{\"foo\":\"barr\"}",false);
 	printf("return from http_post: %" PRIx32 "\n",ret);
 
 	while (aptMainLoop())
@@ -225,8 +346,9 @@ int main()
 
 		circlePosition pos;
 		hidCircleRead(&pos);
-		if (kDown & KEY_START) break;
+		if ((kDown & KEY_START) && (kDown & KEY_SELECT)) break;
 
+		// --- buttons registration ---
 		// if a key is pressed and the keys are diferent from the previous frame
 		if(kDown != kDownOld || kHeld != kHeldOld || kUp != kUpOld) {
 			consoleClear();
@@ -267,11 +389,10 @@ int main()
 				pos.dx,pos.dy,
 				stringDowns,stringHelds,stringUps
 			);
-			ret = http_post("http://192.168.0.2:3000/api/keyPressed", buf,false);
+			ret = http_post(url_keypressed, buf,false);
 			printf("%s",buf);
 			printf("\nreturn from http_pos: %" PRIx32 "\n",ret);
 		}
-
 		kDownOld = kDown;
 		kHeldOld = kHeld;
 		kUpOld = kUp;

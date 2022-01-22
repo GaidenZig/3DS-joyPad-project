@@ -1,11 +1,11 @@
 {
-  "name": "3DS-local-Server",
+  "name": "3ds-joyapp",
   "version": "1.0.0",
   "description": "",
   "main": "index.js",
   "scripts": {
     "start": "babel-node api-src/index.js",
-    "development": "nodemon api-src/index.js --exec babel-node"
+    "dev": "nodemon api-src/index.js --exec babel-node"
   },
   "keywords": [],
   "author": "",
@@ -13,7 +13,8 @@
   "dependencies": {
     "dotenv": "^10.0.0",
     "express": "^4.17.1",
-    "mongoose": "^5.13.0"
+    "mongoose": "^5.13.0",
+    "vjoy": "^1.2.2"
   },
   "devDependencies": {
     "@babel/core": "^7.14.6",
